@@ -11,7 +11,7 @@
             <ul>
                 <li><a href="/">Home</a></li>
                 <li><a href="/cart"></a>Cart</li>
-                <li><a href="#">Logout</a></li>
+                <li><a href="/logout">Logout</a></li>
             </ul>
         </nav>
     </header>
@@ -20,8 +20,9 @@
     <ul>
         {% for product in products %}
             <li>
+                <img src="{{ url_for('static', filename='uploads/' + product.image_path) }}">
                 <a href="{{ url_for('product_detail', product_id=product.id) }}">{{ product.name }}</a> 
-                - ${{ product.price }}
+                - Ksh{{ product.price }}
                 <a href="{{ url_for('add_to_cart', product_id=product.id) }}">Add to Cart</a>
             </li>
         {% endfor %}

@@ -10,7 +10,7 @@
         <ul>
             {% for item in cart_items %}
                 <li>
-                    {{ item.product.name }} x {{ item.quantity }} - ${{ item.subtotal }}
+                    {{ item.product.name }} * {{ item.quantity }} - ${{ item.subtotal }}
                 </li>
             {% endfor %}
         </ul>

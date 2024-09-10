@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired
@@ -33,6 +35,13 @@ class ProductForm(FlaskForm):
     image = FileField('Image')
     submit = SubmitField('Add Product')
 
+class Order(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
+product = db.relationship('Product', backref=db.backref('orders', lazy=True))
+customer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+customer = db.relationship('User', backref=db.backref('orders', lazy=True))
+
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
@@ -54,6 +63,11 @@ class RegistrationForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Register')
+
+admin = Admin(app, name='Luku Admin', template_mode='bootstrap4')
+admin.add_view(ModelView(User, db.session))
+admin.add_view(ModelView(Product, db.session))
+admin.add_view(ModelView(Order, db.session))
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -129,7 +143,7 @@ def add_product():
 
 @app.route('/product/<int:product_id>')
 def product_detail(product_id):
-    product = Product.query.get_orr_404(product_id)
+    product = Product.query.get_or_404(product_id)
     return render_template('product_detail.html', product=product)
 
 @app.route('/add_to_cart/<int:product_id>')
