@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add products</title>
+</head>
+<body>
+    <h1>Add products</h1>
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ form.name.label }} {{ form.name(size=32) }}
+        </div>
+        <div>
+            {{ form.description.label }} {{ form.description(size=64) }}
+        </div>
+        <div>
+            {{ form.price.label }} {{ form.price(size=10) }}
+        </div>
+        <div>
+            {{ form.image.label }} {{ form.image() }}  <!-- File input for the image -->
+        </div>
+        <div>
+            {{ form.submit() }}
+        </div>
+    </form>
+    
+</body>
+</html>
