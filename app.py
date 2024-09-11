@@ -1,6 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
 from flask_admin import Admin
+from functools import wraps
 from flask_admin.contrib.sqla import ModelView
+from flask_admin.form.upload import ImageUploadField
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired
@@ -28,12 +30,35 @@ login_manager.init_app(app)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            flash('You do not have permission to access this page.', 'danger')
+            return redirect(url_for(index))
+        return f(*args, **kwargs)
+    return decorated_function
+
 class ProductForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     description = StringField('Description')
     price = StringField('Price', validators=[DataRequired()])
     image = FileField('Image')
     submit = SubmitField('Add Product')
+
+class ProductAdminView(ModelView):
+    form_extra_fields = {
+        'image_data': ImageUploadField('Image', base_path=UPLOAD_FOLDER)
+    }
+    #Override the _save_file method to skip resizing
+    def _save_file(self, data, filename):
+        path = self._get_path(filename)
+        if self.image:
+            self.image.save(path)
+        else:
+            with open(path, 'wb') as f:
+                f.write(data)
+        return filename
 
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -64,10 +89,12 @@ class RegistrationForm(FlaskForm):
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Register')
 
-admin = Admin(app, name='Luku Admin', template_mode='bootstrap4')
+admin = Admin(app, name='Luku Admin', template_mode='bootstrap3')
 admin.add_view(ModelView(User, db.session))
-admin.add_view(ModelView(Product, db.session))
+admin.add_view(ProductAdminView(Product, db.session))
 admin.add_view(ModelView(Order, db.session))
+
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -120,8 +147,11 @@ def products():
     return render_template('products.html', products=products)
 
 @app.route('/add_product', methods=['GET', 'POST'])
+@login_required
+@admin_required
 def add_product():
     form = ProductForm()
+    image = FileField('Image')
     if form.validate_on_submit():
         if 'image' not in request.files:
             flash('No file part')
@@ -133,7 +163,16 @@ def add_product():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            product = Product(name=form.name.data, description=form.description.data, price=form.price.data, image_path=filename)
+            product = Product(name=form.name.data, description=form.description.data, price=form.price.data, image_data=image_data)
+            image_data = file.read()
+            print(type(image_data))
+
+            product = Product(
+                name=form.name.data,
+                description=form.description.data,
+                price=form.price.data,
+                image_data=image_data
+            )
 
             db.session.add(product)
             db.session.commit()

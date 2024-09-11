@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Products</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <header>
@@ -17,15 +18,21 @@
     </header>
 
     <h1>Products</h1>
-    <ul>
-        {% for product in products %}
-            <li>
-                <img src="{{ url_for('static', filename='uploads/' + product.image_path) }}">
-                <a href="{{ url_for('product_detail', product_id=product.id) }}">{{ product.name }}</a> 
-                - Ksh{{ product.price }}
-                <a href="{{ url_for('add_to_cart', product_id=product.id) }}">Add to Cart</a>
-            </li>
-        {% endfor %}
-    </ul>
+    <div class="grid-container">
+        <div class="product_list">
+            <ul>
+                {% for product in products %}
+                    <li id="product_list">
+                        <div class="product_image">
+                            <img src="{{ url_for('product_image', product_id=product.id) }}" alt="{{ product.name }}">
+                        </div>
+                        <a href="{{ url_for('product_detail', product_id=product.id) }}">{{ product.name }}</a>
+                        Ksh{{ product.price }}
+                        <a href="{{ url_for('add_to_cart', product_id=product.id) }}">Add to Cart</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
 </body>
 </html>
